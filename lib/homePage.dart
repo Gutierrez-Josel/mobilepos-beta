@@ -351,39 +351,39 @@ class _TimeInDialogState extends State<TimeInDialog> {
     return DateFormat("yyyy-MM-dd HH:mm:ss").format(DateTime.now());
   }
 
-  Future<void> validate_platenum() async
-  {
-    try
-    {
+  Future<void> validate_platenum() async {
+    try {
       final apilink = hostaddress + "/api/platevalidation";
 
-
-      Map<String, dynamic> send_platenum =
-      {
-        "plate_number" : print_platenum
+      Map<String, dynamic> send_platenum = {
+        "plate_number": print_platenum,
       };
 
-      final response = await http.post(Uri.parse(apilink),body: send_platenum,  headers: {
+      final response = await http.post(Uri.parse(apilink), body: send_platenum, headers: {
         'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json'});
+        'Content-Type': 'application/json'
+      });
 
       Map<String, dynamic> apiresponse = Map<String, dynamic>.from(jsonDecode(response.body));
       print(apiresponse['response']);
       print(apiresponse['message']);
-
-    }
-    catch(e)
-    {
+    } catch (e) {
       print(e);
     }
+  }
+
+  bool _isInputValid(String input) {
+    // Check if the input is null or contains only whitespace characters
+    return input.trim().isNotEmpty;
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Time In: $_currentTime', style: TextStyle(
-          color: Colors.black54, fontSize: 20
-      ),),
+      title: Text(
+        'Time In: $_currentTime',
+        style: TextStyle(color: Colors.black54, fontSize: 20),
+      ),
       content: TextField(
         controller: widget.plateController,
         decoration: InputDecoration(
@@ -399,28 +399,27 @@ class _TimeInDialogState extends State<TimeInDialog> {
           child: Text('Cancel', style: TextStyle(color: Colors.white)),
         ),
         ElevatedButton(
-          onPressed: () async{
+          onPressed: () async {
+
             String plateNumber = widget.plateController.text;
+            if (!_isInputValid(plateNumber)) {
+              return; // Exit if input is invalid
+            }
             timein_print = _currentTime;
             print_platenum = plateNumber.toUpperCase();
             print(plateNumber);
             print(_currentTime);
             String insert = await _databaseService.insert_issued_tickets(plateNumber.toUpperCase(), timein_print!);
 
-            if(insert == "200")
-              {
-                print("SUCESSFULLY INSERT TO DATABASE");
-                validate_platenum();
-                if(mounted)
-                  {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BluetoothPrintPage()));
-                  }
-
+            if (insert == "200") {
+              print("SUCCESSFULLY INSERT TO DATABASE");
+              validate_platenum();
+              if (mounted) {
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BluetoothPrintPage()));
               }
-            else if(insert == "404")
-              {
-                print("FAILED INSERT TO DATABASE");
-              }
+            } else if (insert == "404") {
+              print("FAILED INSERT TO DATABASE");
+            }
           },
           child: Text('Print', style: TextStyle(color: Colors.white)),
         ),
